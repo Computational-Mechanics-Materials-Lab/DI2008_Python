@@ -46,4 +46,4 @@ This driver uses named enumerations to ensure that what settings are being used 
 * Specify Digital Input as well as Output
 * Reading configuration from .json/.toml files as well as raw Python dictionaries
 
-Further information about the DI-2008 can be found on [DATAQ's website](https://www.dataq.com/products/di-2008) and via the [DI-2008 Protocol](https://www.dataq.com/resources/pdfs/misc/di-2008%20protcol.pdf).
+Further information about the DI-2008 can be found on [DATAQ's website](https://www.dataq.com/products/di-2008) and via the [DI-2008 Protocol](https://www.dataq.com/resources/pdfs/misc/di-2008%20protocol.pdf).
