@@ -10,18 +10,18 @@ Maintainer: Clark Hensley ch3136@msstate.edu
 ## Getting Started
 Install via pip from PyPI:
 ```sh
-pip install di-2008-driver
+pip install di2008-python
 ```
 
-Instantiate DI\_2008 Object with Dictionary of Parameters:
+Instantiate DI2008 Object with Dictionary of Parameters:
 ```py
-from di_2008_driver import DI_2008, DI_2008Channels, DI_2008Layout, DI_2008TCType
+from di2008_python import DI2008, DI2008Channels, DI2008Layout, DI2008TCType
 
 # Enable the DI-2008 with a K-Type thermocopule in Analog Channel 1, an N-Type Thermocouple in Analog Channel 3, and the Digital Channel active
-di2008 = DI_2008({
+di2008 = DI2008({
     <DI-2008 SERIAL NUMBER>: {
-        DI_2008Channels.CH1: (DI_2008Layout.TC, DI_2008TCType.K),
-        DI_2008Channels.CH3: (DI_2008Layout.TC, DI_2008TCType.N),
+        DI2008Channels.CH1: (DI2008Layout.TC, DI2008TCType.K),
+        DI2008Channels.CH3: (DI2008Layout.TC, DI2008TCType.N),
         }
     },
     use_digital=True)
