@@ -1,10 +1,10 @@
 """
-DATAQ DI-2008 Driver
-Adapted from original DATAQ Instruments Driver under the MIT License
+DATAQ DI-2008 Interface
+Adapted from original DATAQ Instruments Python Interface under the MIT License
 
 Provides an interface for configuring and reading from DI-2008 Data Acquisition Devices (DAQs)
 
-This file is part of the DI_2008_Driver, https://github.com/Computational-Mechanics-Materials-Lab/DI-2008-Driver
+This file is part of DI2008_Python, https://github.com/Computational-Mechanics-Materials-Lab/DI-2008-Driver
 
 MIT License
 """
@@ -17,23 +17,23 @@ import serial.tools.list_ports
 from typing import Self, Callable, TypeAlias
 
 # Enumerations for DAQ Settings
-from .di_2008_layout_settings import (
-    DI_2008Layout,
-    DI_2008TCType,
-    DI_2008ADCRange,
-    DI_2008Channels,
-    DI_2008AllChannels,
-    DI_2008DigitalChannel,
-    DI_2008ScanRateSettings,
-    DI_2008FilterModes,
-    DI_2008PSOption,
-    DI_2008PSSettings,
+from .di2008_layout_settings import (
+    DI2008Layout,
+    DI2008TCType,
+    DI2008ADCRange,
+    DI2008Channels,
+    DI2008AllChannels,
+    DI2008DigitalChannel,
+    DI2008ScanRateSettings,
+    DI2008FilterModes,
+    DI2008PSOption,
+    DI2008PSSettings,
 )
 
-DI_2008ChannelsAlias: TypeAlias = DI_2008Channels | DI_2008DigitalChannel
+DI2008ChannelsAlias: TypeAlias = DI2008Channels | DI2008DigitalChannel
 
 
-class DI_2008Port:
+class DI2008Port:
     """
     Structure Class
     Stores a single port with:
@@ -45,13 +45,13 @@ class DI_2008Port:
 
     def __init__(
         self: Self,
-        channel: DI_2008Channels | DI_2008DigitalChannel,
+        channel: DI2008Channels | DI2008DigitalChannel,
         layout: int,
         connected_type: int,
         rescalar: Callable[[float], float],
     ) -> None:
         """
-        DI_2008 Init Signature:
+        DI2008Port Init Signature:
         channel: int
         layout: int
         connected_type: int
@@ -81,7 +81,7 @@ class SerialConnectionWrapper:
         self.location: str = location
         self.conn: serial.Serial = connection
         self.serial_num: int | None = None
-        self.ports: list[DI_2008Port] | None = None
+        self.ports: list[DI2008Port] | None = None
 
     def send_command(self: Self, command: str) -> None:
         """Send a command without echoing"""
@@ -96,7 +96,7 @@ class SerialConnectionWrapper:
         self.conn.close()
 
     def _send_command(self: Self, command: str, echo: bool) -> str | None:
-        """Internal method for formatting, sending, and receiving DI_2008 communication"""
+        """Internal method for formatting, sending, and receiving DI2008 communication"""
         formatted_command: str = f"{command}\r"
         self.conn.write(formatted_command.encode())
         time.sleep(0.1)
@@ -124,9 +124,9 @@ class SerialConnectionWrapper:
             return None
 
 
-class DI_2008:
+class DI2008:
     """
-    DI_2008 Driver
+    DI2008 Python Interface
     When provided input parameters, automatically contacts and configures all requested DI-2008s
     Can then be used to read from connected DAQs
     """
@@ -140,7 +140,7 @@ class DI_2008:
         target_hwid: str = "USB VID:PID=0683",
     ) -> None:
         """
-        DI_2008 Signature:
+        DI2008 Signature:
         daq_layout_dict: dict (Dictionary of DAQ Serial Nums to settings. See README for more details)
         Whether or not to use the digital channel, use_digital: bool
         baud_rate: int (default 115200)
@@ -153,15 +153,15 @@ class DI_2008:
         self.timeout: float = timeout
         self.TARGET_HWID: str = target_hwid
         self.serial_connections: list[SerialConnectionWrapper] = []
-        self.tc_rescalars: dict[DI_2008TCType, Callable[[float], float]] = {
-            DI_2008TCType.B: self._tc_b,
-            DI_2008TCType.E: self._tc_e,
-            DI_2008TCType.J: self._tc_j,
-            DI_2008TCType.K: self._tc_k,
-            DI_2008TCType.N: self._tc_n,
-            DI_2008TCType.R: self._tc_r_s,
-            DI_2008TCType.S: self._tc_r_s,
-            DI_2008TCType.T: self._tc_t,
+        self.tc_rescalars: dict[DI2008TCType, Callable[[float], float]] = {
+            DI2008TCType.B: self._tc_b,
+            DI2008TCType.E: self._tc_e,
+            DI2008TCType.J: self._tc_j,
+            DI2008TCType.K: self._tc_k,
+            DI2008TCType.N: self._tc_n,
+            DI2008TCType.R: self._tc_r_s,
+            DI2008TCType.S: self._tc_r_s,
+            DI2008TCType.T: self._tc_t,
         }
 
         # Locate selected DI-2008s
@@ -213,7 +213,7 @@ class DI_2008:
                 layout_input: dict | None
                 if layout_input := self.daq_layout_dict.get(scw.serial_num):
                     # Use the input data to get the configuration and save the connection.
-                    scw_ports: list[DI_2008Port] = self.get_scw_port_configuration(
+                    scw_ports: list[DI2008Port] = self.get_scw_port_configuration(
                         layout_input
                     )
                     assert scw_ports is not None
@@ -238,16 +238,16 @@ class DI_2008:
             individual_layout_dict: dict = self.daq_layout_dict[scw.serial_num]
 
             # Check for a given ps value. If not, set to 0 (16 bytes)
-            ps_value: DI_2008PSSettings | None
-            if ps_value := individual_layout_dict.get(DI_2008PSOption):
+            ps_value: DI2008PSSettings | None
+            if ps_value := individual_layout_dict.get(DI2008PSOption):
                 scw.send_command(f"ps {ps_value}")
 
             else:
-                scw.send_command(f"ps {DI_2008PSSettings.BYTES16}")
+                scw.send_command(f"ps {DI2008PSSettings.BYTES16}")
 
             # Check for an srate value. If not, set to 4
             srate_value: int | None
-            if srate_value := individual_layout_dict.get(DI_2008ScanRateSettings.SRATE):
+            if srate_value := individual_layout_dict.get(DI2008ScanRateSettings.SRATE):
                 if not (4 <= srate_value <= 2232):
                     raise RuntimeError(
                         f"srate value for DI-2008 with Serial Number {scw.serial_num} was not between 4 and 2232, but was instead {srate_value}"
@@ -260,7 +260,7 @@ class DI_2008:
 
             # Check for a decimation value, if not, set to 1
             dec_value: int | None
-            if dec_value := individual_layout_dict.get(DI_2008ScanRateSettings.DEC):
+            if dec_value := individual_layout_dict.get(DI2008ScanRateSettings.DEC):
                 if not (1 <= dec_value <= 32767):
                     raise RuntimeError(
                         f"dec value for DI-2008 with Serial Number {scw.serial_num} was not between 1 and 32767, but was instead {srate_value}"
@@ -272,14 +272,14 @@ class DI_2008:
                 scw.send_command("dec 1")
 
             # See if filter settings are given
-            channel_filter_dict: dict[DI_2008ChannelsAlias, DI_2008FilterModes] | None
+            channel_filter_dict: dict[DI2008ChannelsAlias, DI2008FilterModes] | None
             if channel_filter_dict := individual_layout_dict.get(
-                DI_2008ScanRateSettings.FILTER
+                DI2008ScanRateSettings.FILTER
             ):
-                key: DI_2008ChannelsAlias
-                val: DI_2008FilterModes
+                key: DI2008ChannelsAlias
+                val: DI2008FilterModes
                 for key, val in channel_filter_dict.items():
-                    if key is DI_2008AllChannels:
+                    if key is DI2008AllChannels:
                         scw.send_command(f"filter * {val.value}")
 
                     else:
@@ -287,7 +287,7 @@ class DI_2008:
 
             # Finally, do the slist settings generated in the last step to this DAQ.
             assert scw.ports is not None
-            port: DI_2008Port
+            port: DI2008Port
             for port in scw.ports:
                 scw.send_command(f"slist {port.channel} {port.layout}")
 
@@ -339,33 +339,31 @@ class DI_2008:
             for scw in self.serial_connections:
                 scw.send_command("start")
 
-    def get_scw_port_configuration(self, layout_input) -> list[DI_2008Port]:
+    def get_scw_port_configuration(self, layout_input) -> list[DI2008Port]:
         """
         Given the dict of a desired layout, configure it into the needed values in order
         """
-        ports: list[DI_2008Port] = []
-        layout: (
-            DI_2008Layout | tuple[DI_2008Layout, DI_2008TCType | DI_2008ADCRange] | None
-        )
-        channel: DI_2008Channels
+        ports: list[DI2008Port] = []
+        layout: DI2008Layout | tuple[DI2008Layout, DI2008TCType | DI2008ADCRange] | None
+        channel: DI2008Channels
         # If the same setting is used for all channels
-        if layout := layout_input.get(DI_2008AllChannels):
-            for channel in DI_2008Channels:
+        if layout := layout_input.get(DI2008AllChannels):
+            for channel in DI2008Channels:
                 ports.append(self.get_di2008_port_layout(channel, layout))
         # If there are different settings given for any channel
         else:
-            for channel in DI_2008Channels:
-                layout = layout_input.get(channel, DI_2008Layout.IGNORE)
+            for channel in DI2008Channels:
+                layout = layout_input.get(channel, DI2008Layout.IGNORE)
                 assert layout is not None
                 ports.append(self.get_di2008_port_layout(channel, layout))
 
         # Append the digital channel to the end if needed
         if self.use_digital:
             ports.append(
-                DI_2008Port(
-                    DI_2008DigitalChannel.DI,
-                    DI_2008Layout.DI,
-                    DI_2008Layout.DI,
+                DI2008Port(
+                    DI2008DigitalChannel.DI,
+                    DI2008Layout.DI,
+                    DI2008Layout.DI,
                     (lambda x: x),
                 )
             )
@@ -374,13 +372,13 @@ class DI_2008:
 
     def get_di2008_port_layout(
         self,
-        channel: DI_2008Channels,
-        layout: DI_2008Layout | tuple[DI_2008Layout, DI_2008TCType | DI_2008ADCRange],
-    ) -> DI_2008Port:
+        channel: DI2008Channels,
+        layout: DI2008Layout | tuple[DI2008Layout, DI2008TCType | DI2008ADCRange],
+    ) -> DI2008Port:
         """
         Given some layout and the channel, determine which device is connected, get the correct rescaling factor, and return the port
         """
-        connected_type: DI_2008Layout
+        connected_type: DI2008Layout
         rescalar: Callable[[float], float]
         final_layout: int
 
@@ -393,39 +391,39 @@ class DI_2008:
             connected_type = layout
 
         # For Thermocouple, get the right rescalar and set the layout
-        if connected_type is DI_2008Layout.TC:
+        if connected_type is DI2008Layout.TC:
             assert isinstance(layout, tuple)
-            assert isinstance(layout[1], DI_2008TCType)
-            tc_type: DI_2008TCType = layout[1]
-            final_layout = (DI_2008Layout.TC | tc_type) | channel
+            assert isinstance(layout[1], DI2008TCType)
+            tc_type: DI2008TCType = layout[1]
+            final_layout = (DI2008Layout.TC | tc_type) | channel
             rescalar = self.tc_rescalars[tc_type]
 
         # For ADC, use the acual value to rescale it
-        elif connected_type is DI_2008Layout.ADC:
+        elif connected_type is DI2008Layout.ADC:
             assert isinstance(layout, tuple)
-            assert isinstance(layout[1], DI_2008ADCRange)
-            adc_range: DI_2008ADCRange = layout[1]
+            assert isinstance(layout[1], DI2008ADCRange)
+            adc_range: DI2008ADCRange = layout[1]
             final_layout = adc_range.value[0] | channel
             rescalar = lambda x: adc_range.value[1] * (x / 32768.0)
 
         # Instead of truly ignoring, treat as an empty B-type Thermocouple. Won't be read from, whether or not something is connected
-        elif connected_type is DI_2008Layout.IGNORE:
-            final_layout = DI_2008Layout.TC | channel
+        elif connected_type is DI2008Layout.IGNORE:
+            final_layout = DI2008Layout.TC | channel
             rescalar = lambda x: x
 
         else:
             raise Exception("Not a valid layout!")
 
-        return DI_2008Port(channel, final_layout, connected_type, rescalar)
+        return DI2008Port(channel, final_layout, connected_type, rescalar)
 
-    def read_daqs(self) -> dict[int, dict[DI_2008ChannelsAlias, float]]:
-        all_res: dict[int, dict[DI_2008ChannelsAlias, float]] = {}
+    def read_daqs(self) -> dict[int, dict[DI2008ChannelsAlias, float]]:
+        all_res: dict[int, dict[DI2008ChannelsAlias, float]] = {}
         scw: SerialConnectionWrapper
         for scw in self.serial_connections:
             assert scw.serial_num is not None
             all_res[scw.serial_num] = {}
 
-            port: DI_2008Port
+            port: DI2008Port
             assert scw.ports is not None
             for port in scw.ports:
                 while scw.conn.in_waiting < 2:
@@ -434,11 +432,11 @@ class DI_2008:
                 raw_byte: bytes = bytes(scw.conn.read(2))
 
                 # Ignore ports marked as such
-                if port.connected_type is DI_2008Layout.IGNORE:
+                if port.connected_type is DI2008Layout.IGNORE:
                     continue
 
                 # Digital Port (must zero-out upper bits
-                elif port.connected_type is DI_2008Layout.DI:
+                elif port.connected_type is DI2008Layout.DI:
                     formatted_byte = (
                         int.from_bytes(raw_byte, byteorder="little", signed=True) & 0x7F
                     )
@@ -451,7 +449,7 @@ class DI_2008:
 
                 # Rescale as necessary
                 final_res: float = port.rescalar(formatted_byte)
-                assert isinstance(port.channel, DI_2008ChannelsAlias)
+                assert isinstance(port.channel, DI2008ChannelsAlias)
                 all_res[scw.serial_num][port.channel] = final_res
 
         return all_res

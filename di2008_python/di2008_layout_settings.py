@@ -1,10 +1,10 @@
 """
-DATAQ DI-2008 Driver -- Layout Enumerations
-Adapted from original DATAQ Instruments Driver under the MIT License
+DATAQ DI-2008 Interface -- Layout Enumerations
+Adapted from original DATAQ Instruments Python Interface under the MIT License
 
 The DI-2008 uses a serial interface with integer values. This file declares the enumerations to describe these values
 
-This file is part of the DI_2008_Driver, https://github.com/Computational-Mechanics-Materials-Lab/DI-2008-Driver
+This file is part of DI2008_Python, https://github.com/Computational-Mechanics-Materials-Lab/DI2008_Python
 
 MIT License
 """
@@ -12,7 +12,7 @@ MIT License
 from enum import IntEnum, Enum
 
 
-class DI_2008Layout(IntEnum):
+class DI2008Layout(IntEnum):
     """
     Describes the connected device to each port on the DAQ
     """
@@ -35,7 +35,7 @@ class DI_2008Layout(IntEnum):
     ADC = 0x0000
 
 
-class DI_2008TCType(IntEnum):
+class DI2008TCType(IntEnum):
     """
     Enumerates the types of Thermocouple which the DI-2008 cna read
     """
@@ -50,7 +50,7 @@ class DI_2008TCType(IntEnum):
     T = 0x7 << 8
 
 
-class DI_2008ADCRange(Enum):
+class DI2008ADCRange(Enum):
     """
     Enumerates the voltage ranges for ADC, as well as the necessary multiplier for rescaling
     """
@@ -69,7 +69,7 @@ class DI_2008ADCRange(Enum):
     V50 = ((0x8 << 8), 50.0)
 
 
-class DI_2008Channels(IntEnum):
+class DI2008Channels(IntEnum):
     """
     Enumerates the 8 Analog Channels
     """
@@ -93,10 +93,10 @@ class EmptySentinel:
 
 
 # used to denote all 8 channels, rather than a single integer
-DI_2008AllChannels = EmptySentinel()
+DI2008AllChannels = EmptySentinel()
 
 
-class DI_2008DigitalChannel(IntEnum):
+class DI2008DigitalChannel(IntEnum):
     """
     This uses an IntEnum to associate the name, "DI" with the number for it, even though this is a singleton enum. This is not used by the user, just ste on the back-end
     """
@@ -106,7 +106,7 @@ class DI_2008DigitalChannel(IntEnum):
     DI = 0x8
 
 
-class DI_2008ScanRateSettings(Enum):
+class DI2008ScanRateSettings(Enum):
     """
     Sentinels to manage the values related to scan rate and filtering
     """
@@ -116,7 +116,7 @@ class DI_2008ScanRateSettings(Enum):
     FILTER = 2
 
 
-class DI_2008FilterModes(Enum):
+class DI2008FilterModes(Enum):
     """
     Values for Filtering of the DI-2008
     """
@@ -128,11 +128,11 @@ class DI_2008FilterModes(Enum):
 
 
 # Used to denote that the PS Value is being set
-DI_2008PSOption = EmptySentinel()
+DI2008PSOption = EmptySentinel()
 
 
 # Potential valid values for PS
-class DI_2008PSSettings(IntEnum):
+class DI2008PSSettings(IntEnum):
     """
     Potential values for the PS setting
     """
