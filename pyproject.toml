@@ -4,7 +4,7 @@ description = "Python Interface for the DATAQ DI-2008 DAQ"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{name = "Clark Hensley", email = "ch3136@msstate.edu"}]
-maintainerss = [{name = "Clark Hensley", email = "ch3136@msstate.edu"}]
+maintainers = [{name = "Clark Hensley", email = "ch3136@msstate.edu"}]
 requires-python = ">=3.13"
 dependencies = [
     "pyserial>=3.5",
