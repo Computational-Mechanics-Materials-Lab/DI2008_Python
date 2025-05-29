@@ -1,9 +1,9 @@
-# DI-2008-Driver
+# DI2008-Python
 
 ## About
-Driver for interfacing with the DI-2008 in Python.
+Interface for the DI-2008 in Python.
 
-Modified from original driver by DATAQ Instruments under MIT License
+Modified from original interface in Python by DATAQ Instruments under MIT License
 
 Maintainer: Clark Hensley ch3136@msstate.edu
 
@@ -27,7 +27,7 @@ di2008 = DI2008({
     use_digital=True)
 ```
 
-This driver uses named enumerations to ensure that what settings are being used is clear and concise
+This interface uses named enumerations to ensure that what settings are being used is clear and concise
 
 ## Current Features:
 * Thermocouples
