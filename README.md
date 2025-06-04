@@ -22,12 +22,22 @@ di2008 = DI2008({
     <DI-2008 SERIAL NUMBER>: {
         DI2008Channels.CH1: (DI2008Layout.TC, DI2008TCType.K),
         DI2008Channels.CH3: (DI2008Layout.TC, DI2008TCType.N),
+        DI2008UseDigital: True,
         }
     },
-    use_digital=True)
+)
 ```
 
 This interface uses named enumerations to ensure that what settings are being used is clear and concise
+
+A path to a .toml or .json file can also be passed in, formatted with the same names:
+```toml
+[<DI-2008 SERIAL NUMBER>]
+"DI2008Channels.CH1" = ["DI2008Layout.TC", "DI2008TCType.K"]
+"DI2008Channels.CH3" = ["DI2008Layout.TC", "DI2008TCType.N"]
+"DI2008UseDigital" = true
+```
+(Note that toml format will treat the dotted names like DI2008Channels.CH1 as dictionaries, so they must be in quotes. The parser does handle variations in capitalization, spacing, or use of hyphens and underscores)
 
 ## Current Features:
 * Thermocouples
@@ -35,6 +45,7 @@ This interface uses named enumerations to ensure that what settings are being us
 * Digital Reading
 * Changing Scan Rate, Decimation, and Filtering Mode
 * Automatic ChannelStretch Synchronized Initialization
+* Reading configuration from .json/.toml files as well as raw Python dictionaries
 
 ## Planned Features:
 * Changing Packet Rate Size
@@ -44,6 +55,5 @@ This interface uses named enumerations to ensure that what settings are being us
 * Rate Measurement
 * LED Color
 * Specify Digital Input as well as Output
-* Reading configuration from .json/.toml files as well as raw Python dictionaries
 
 Further information about the DI-2008 can be found on [DATAQ's website](https://www.dataq.com/products/di-2008) and via the [DI-2008 Protocol](https://www.dataq.com/resources/pdfs/misc/di-2008%20protocol.pdf).

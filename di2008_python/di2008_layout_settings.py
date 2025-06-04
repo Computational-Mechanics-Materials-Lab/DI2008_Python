@@ -84,16 +84,13 @@ class DI2008Channels(IntEnum):
     CH8 = 0x7
 
 
-class EmptySentinel:
+class _DI2008AllChannels(Enum):
     """
-    Just an empty value so that this doesn't get treated as an integer
+    Denote all 8 channels, not an actual value
     """
+    _instance = 0
 
-    pass
-
-
-# used to denote all 8 channels, rather than a single integer
-DI2008AllChannels = EmptySentinel()
+DI2008AllChannels = _DI2008AllChannels._instance
 
 
 class DI2008DigitalChannel(IntEnum):
@@ -104,6 +101,15 @@ class DI2008DigitalChannel(IntEnum):
     # The digital channel is
     # 0b0000000000001000
     DI = 0x8
+
+
+class _DI2008UseDigital(Enum):
+    """
+    Denote if the digital channel is used, not an actual value
+    """
+    _instance = 0
+
+DI2008UseDigital = _DI2008UseDigital._instance
 
 
 class DI2008ScanRateSettings(Enum):
@@ -127,8 +133,13 @@ class DI2008FilterModes(Enum):
     MINIMUM = 3
 
 
-# Used to denote that the PS Value is being set
-DI2008PSOption = EmptySentinel()
+class _DI2008PSOption(Enum):
+    """
+    Denote that the PS is being set, not a value
+    """
+    _instance = 0
+
+DI2008PSOption = _DI2008PSOption._instance
 
 
 # Potential valid values for PS

@@ -17,6 +17,7 @@ from .di2008_layout_settings import (
     DI2008Channels,
     DI2008AllChannels,
     DI2008DigitalChannel,
+    DI2008UseDigital,
     DI2008ScanRateSettings,
     DI2008FilterModes,
     DI2008PSOption,
@@ -26,7 +27,7 @@ from .di2008_layout_settings import (
 __author__ = "Clark Hensley, J. Logan Betts, and Matthew W. Priddy"
 __copyright__ = "Copyright 2025"
 __license__ = "MIT"
-__version__ = "1.0.0"
+__version__ = "1.1.1"
 __maintainer__ = "Clark Hensley"
 __email__ = "ch3136@msstate.edu"
 __status__ = "Production"
@@ -39,6 +40,7 @@ __all__ = [
     "DI2008Channels",
     "DI2008AllChannels",
     "DI2008DigitalChannel",
+    "DI2008UseDigital",
     "DI2008ScanRateSettings",
     "DI2008FilterModes",
     "DI2008PSOption",

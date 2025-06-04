@@ -13,8 +13,15 @@ import time
 import serial
 import serial.tools.list_ports
 
+import sys
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
+import json
+
 # Typing
-from typing import Self, Callable, TypeAlias
+from typing import Self, Callable, TypeAlias, BinaryIO, TextIO, Any, Final
 
 # Enumerations for DAQ Settings
 from .di2008_layout_settings import (
@@ -22,8 +29,10 @@ from .di2008_layout_settings import (
     DI2008TCType,
     DI2008ADCRange,
     DI2008Channels,
+    _DI2008AllChannels,
     DI2008AllChannels,
     DI2008DigitalChannel,
+    DI2008UseDigital,
     DI2008ScanRateSettings,
     DI2008FilterModes,
     DI2008PSOption,
@@ -40,7 +49,7 @@ class DI2008Port:
     channel number (channel: int)
     port layout (layout: int)
     type of connected device (connected_type: int)
-    sclaing function (rescalar: Callable[[float], float])
+    sclaing function (rescalar: Callable[[int], float])
     """
 
     def __init__(
@@ -48,19 +57,19 @@ class DI2008Port:
         channel: DI2008Channels | DI2008DigitalChannel,
         layout: int,
         connected_type: int,
-        rescalar: Callable[[float], float],
+        rescalar: Callable[[int], float],
     ) -> None:
         """
         DI2008Port Init Signature:
         channel: int
         layout: int
         connected_type: int
-        rescalar: Callable[[float], float]
+        rescalar: Callable[[int], float]
         """
         self.channel: int = channel
         self.layout: int = layout
         self.connected_type: int = connected_type
-        self.rescalar: Callable[[float], float] = rescalar
+        self.rescalar: Callable[[int], float] = rescalar
 
 
 class SerialConnectionWrapper:
@@ -85,17 +94,17 @@ class SerialConnectionWrapper:
 
     def send_command(self: Self, command: str) -> None:
         """Send a command without echoing"""
-        self._send_command(command, False)
+        self._send_command(command)
 
     def echo(self: Self, command: str) -> str | None:
         """Send a command and echo the result"""
-        return self._send_command(command, True)
+        return self._send_command(command)
 
     def close(self: Self) -> None:
-        """Close the serial connection"""
-        self.conn.close()
+       """Close the serial connection"""
+       self.conn.close()
 
-    def _send_command(self: Self, command: str, echo: bool) -> str | None:
+    def _send_command(self: Self, command: str) -> str | None:
         """Internal method for formatting, sending, and receiving DI2008 communication"""
         formatted_command: str = f"{command}\r"
         self.conn.write(formatted_command.encode())
@@ -115,13 +124,7 @@ class SerialConnectionWrapper:
                 res = res.replace(chr(0), "")
                 final += res
 
-            if echo:
-                if len(final) > 0:
-                    return final
-                else:
-                    return ""
-
-            return None
+            return final
 
 
 class DI2008:
@@ -133,8 +136,7 @@ class DI2008:
 
     def __init__(
         self: Self,
-        daq_layout_dict: dict,
-        use_digital: bool = False,
+        daq_layout_dict: dict[Any, Any],
         baud_rate: int = 115200,
         timeout: float = 0.0,
         target_hwid: str = "USB VID:PID=0683",
@@ -142,18 +144,16 @@ class DI2008:
         """
         DI2008 Signature:
         daq_layout_dict: dict (Dictionary of DAQ Serial Nums to settings. See README for more details)
-        Whether or not to use the digital channel, use_digital: bool
         baud_rate: int (default 115200)
         timeout: float (default 0.0)
         Hardware ID for DI-2008 (target_hwid: str, default "USB VID:PID=0683")
         """
-        self.daq_layout_dict: dict = daq_layout_dict
-        self.use_digital: bool = use_digital
+        self.daq_layout_dict: dict[Any, Any] = daq_layout_dict
         self.baud_rate: int = baud_rate
         self.timeout: float = timeout
         self.TARGET_HWID: str = target_hwid
         self.serial_connections: list[SerialConnectionWrapper] = []
-        self.tc_rescalars: dict[DI2008TCType, Callable[[float], float]] = {
+        self.tc_rescalars: dict[DI2008TCType, Callable[[int], float]] = {
             DI2008TCType.B: self._tc_b,
             DI2008TCType.E: self._tc_e,
             DI2008TCType.J: self._tc_j,
@@ -210,7 +210,7 @@ class DI2008:
 
                 # Now, we check if the serial number was requested and, if so, create the configuration and make the connection.
 
-                layout_input: dict | None
+                layout_input: dict[Any, Any] | None
                 if layout_input := self.daq_layout_dict.get(scw.serial_num):
                     # Use the input data to get the configuration and save the connection.
                     scw_ports: list[DI2008Port] = self.get_scw_port_configuration(
@@ -235,7 +235,7 @@ class DI2008:
         scw: SerialConnectionWrapper
         for scw in self.serial_connections:
             # Get the layout for this specific connection
-            individual_layout_dict: dict = self.daq_layout_dict[scw.serial_num]
+            individual_layout_dict: dict[Any, Any] = self.daq_layout_dict[scw.serial_num]
 
             # Check for a given ps value. If not, set to 0 (16 bytes)
             ps_value: DI2008PSSettings | None
@@ -276,7 +276,7 @@ class DI2008:
             if channel_filter_dict := individual_layout_dict.get(
                 DI2008ScanRateSettings.FILTER
             ):
-                key: DI2008ChannelsAlias
+                key: DI2008ChannelsAlias | _DI2008AllChannels
                 val: DI2008FilterModes
                 for key, val in channel_filter_dict.items():
                     if key is DI2008AllChannels:
@@ -339,7 +339,7 @@ class DI2008:
             for scw in self.serial_connections:
                 scw.send_command("start")
 
-    def get_scw_port_configuration(self, layout_input) -> list[DI2008Port]:
+    def get_scw_port_configuration(self: Self, layout_input: dict[Any, Any]) -> list[DI2008Port]:
         """
         Given the dict of a desired layout, configure it into the needed values in order
         """
@@ -357,8 +357,8 @@ class DI2008:
                 assert layout is not None
                 ports.append(self.get_di2008_port_layout(channel, layout))
 
-        # Append the digital channel to the end if needed
-        if self.use_digital:
+        # See if this DAQ uses the digital channel:
+        if layout_input.get(DI2008UseDigital):
             ports.append(
                 DI2008Port(
                     DI2008DigitalChannel.DI,
@@ -379,7 +379,7 @@ class DI2008:
         Given some layout and the channel, determine which device is connected, get the correct rescaling factor, and return the port
         """
         connected_type: DI2008Layout
-        rescalar: Callable[[float], float]
+        rescalar: Callable[[int], float]
         final_layout: int
 
         # The TC and ADC needs 2 values, so it's a 2-tuple. The IGNORE version is not
@@ -416,8 +416,169 @@ class DI2008:
 
         return DI2008Port(channel, final_layout, connected_type, rescalar)
 
-    def read_daqs(self) -> dict[int, dict[DI2008ChannelsAlias, float]]:
-        all_res: dict[int, dict[DI2008ChannelsAlias, float]] = {}
+    @classmethod
+    def from_config(cls, config: str | dict[Any, Any]) -> Self:
+        """
+        Given some configuration file or dictionary, return a configured DI2008 object
+        """
+        translated_keys: Final[dict[str, Any]] = {
+            "di2008channelsch1": DI2008Channels.CH1,
+            "di2008channelsch2": DI2008Channels.CH2,
+            "di2008channelsch3": DI2008Channels.CH3,
+            "di2008channelsch4": DI2008Channels.CH4,
+            "di2008channelsch5": DI2008Channels.CH5,
+            "di2008channelsch6": DI2008Channels.CH6,
+            "di2008channelsch7": DI2008Channels.CH7,
+            "di2008channelsch8": DI2008Channels.CH8,
+            "di2008allchannels": DI2008AllChannels,
+            "di2008usedigital": DI2008UseDigital,
+            "di2008scanratesettingssrate": DI2008ScanRateSettings.SRATE,
+            "di2008scanratesettingsdec": DI2008ScanRateSettings.DEC,
+            "di2008scanratesettingsfilter": DI2008ScanRateSettings.FILTER,
+            "di2008psoption": DI2008PSOption,
+        }
+
+        translated_vals: Final[dict[str, Any]] = {
+            "di2008layouttc": DI2008Layout.TC,
+            "di2008layoutdi": DI2008Layout.DI,
+            "di2008layoutignore": DI2008Layout.IGNORE,
+            "di2008layoutadc": DI2008Layout.ADC,
+            "di2008tctypeb": DI2008TCType.B,
+            "di2008tctypee": DI2008TCType.E,
+            "di2008tctypej": DI2008TCType.J,
+            "di2008tctypek": DI2008TCType.K,
+            "di2008tctypen": DI2008TCType.N,
+            "di2008tctyper": DI2008TCType.R,
+            "di2008tctypes": DI2008TCType.S,
+            "di2008tctypet": DI2008TCType.T,
+            "di2008adcrangemv10": DI2008ADCRange.mV10,
+            "di2008adcrangemv25": DI2008ADCRange.mV25,
+            "di2008adcrangemv50": DI2008ADCRange.mV50,
+            "di2008adcrangemv100": DI2008ADCRange.mV100,
+            "di2008adcrangemv250": DI2008ADCRange.mV250,
+            "di2008adcrangemv500": DI2008ADCRange.mV500,
+            "di2008adcrangev1": DI2008ADCRange.V1,
+            "di2008adcrangev2_5": DI2008ADCRange.V2_5,
+            "di2008adcrangev5": DI2008ADCRange.V5,
+            "di2008adcrangev10": DI2008ADCRange.V10,
+            "di2008adcrangev25": DI2008ADCRange.V25,
+            "di2008adcrangev50": DI2008ADCRange.V50,
+            "di2008filtermodeslast_point": DI2008FilterModes.LAST_POINT,
+            "di2008filtermodesaverage": DI2008FilterModes.AVERAGE,
+            "di2008filtermodesmaximum": DI2008FilterModes.MAXIMUM,
+            "di2008filtermodesminimum": DI2008FilterModes.MINIMUM,
+            "di2008pssettingsbytes16": DI2008PSSettings.BYTES16,
+            "di2008pssettingsbytes32": DI2008PSSettings.BYTES32,
+            "di2008pssettingsbytes64": DI2008PSSettings.BYTES64,
+            "di2008pssettingsbytes128": DI2008PSSettings.BYTES128,
+        }
+
+        formatted_config: dict[str, dict[Any, Any]]
+        if isinstance(config, str):
+            # Check for json or toml file path
+            try:
+                formatted_config = cls._config_from_toml(config)
+            except tomllib.TOMLDecodeError:
+                try:
+                    formatted_config = cls._config_from_json(config)
+                except json.decoder.JSONDecodeError:
+                    raise ValueError()
+
+        else:
+            # Just treat the input dict as if it came from a string otherwise
+            formatted_config = config
+
+        final_config: dict[int, dict[Any, Any]] = {}
+        initial_sns: dict[str, str] = {str(k): str(k) for k in formatted_config.keys()}
+        final_sns: dict[str, int]
+
+        k_k: str
+        k_v: str | int
+        for k_k, k_v in initial_sns.items():
+            if not isinstance(k_v, int):
+                new_k_v: int
+                try:
+                    new_k_v = int(k_v)
+                except ValueError:
+                    try:
+                        new_k_v = int(k_v, base=16)
+                    except ValueError as e:
+                        raise ValueError(f"invalid SN for DAQ: {k_v}") from e
+
+            final_sns[k_k] = new_k_v
+
+        k: str
+        v: dict[Any, Any]
+        for k, v in formatted_config.items():
+            final_config[final_sns[k]] = {}
+            _k: str
+            _v: int | float | bool | list[str] | str
+            for _k, _v in v.items():
+                new_k: Any = translated_keys[cls._format_input_k_v(_k)]
+
+                if isinstance(_v, int | float | bool):
+                    final_config[final_sns[k]][new_k] = _v
+
+                elif isinstance(_v, list):
+                    assert len(_v) == 2
+                    final_config[final_sns[k]][new_k] = (
+                        translated_vals[cls._format_input_k_v(_v[0])],
+                        translated_vals[cls._format_input_k_v(_v[1])],
+                    )
+
+                elif isinstance(_v, dict):
+                    # Should only ever be 1 layer deep
+                    new_v: dict[Any, Any] = {}
+                    filter_key: str
+                    filter_val: str
+                    for filter_key, filter_val in _v.items():
+                        new_v[translated_keys[cls._format_input_k_v(filter_key)]] = (
+                            translated_vals[cls._format_input_k_v(filter_val)]
+                        )
+
+                else:
+                    final_config[final_sns[k]][new_k] = translated_vals[
+                        cls._format_input_k_v(_v)
+                    ]
+
+        return cls(final_config)
+
+    @staticmethod
+    def _config_from_toml(config: str) -> dict[Any, Any]:
+        """
+        Read and return a .toml file. Error handling within parent method
+        """
+        fp: BinaryIO
+        with open(config, "rb") as fp:
+            return tomllib.load(fp)
+
+    @staticmethod
+    def _config_from_json(config: str) -> dict[Any, Any]:
+        """
+        Read and return a .json file. Error handling within parent method
+        """
+        fp: TextIO
+        with open(config, "r") as fp:
+            ret: dict[Any, Any] = json.load(fp)
+            assert isinstance(ret, dict)
+            return ret
+
+    @staticmethod
+    def _format_input_k_v(i: str) -> str:
+        """
+        Strip out all formatting characters and spaces, lowercase all. Used only for these dict translations in reading an input dict
+        """
+        return (
+            i.lower()
+            .replace(".", "")
+            .replace("_", "")
+            .replace("-", "")
+            .replace(" ", "")
+            .strip()
+        )
+
+    def read_daqs(self) -> dict[int, dict[DI2008ChannelsAlias, float | int]]:
+        all_res: dict[int, dict[DI2008ChannelsAlias, float | int]] = {}
         scw: SerialConnectionWrapper
         for scw in self.serial_connections:
             assert scw.serial_num is not None
@@ -431,6 +592,7 @@ class DI2008:
 
                 raw_byte: bytes = bytes(scw.conn.read(2))
 
+                formatted_byte: int
                 # Ignore ports marked as such
                 if port.connected_type is DI2008Layout.IGNORE:
                     continue
@@ -441,7 +603,7 @@ class DI2008:
                         int.from_bytes(raw_byte, byteorder="little", signed=True) & 0x7F
                     )
 
-                # All othe types
+                # All other types
                 else:
                     formatted_byte = int.from_bytes(
                         raw_byte, byteorder="little", signed=True
@@ -454,30 +616,30 @@ class DI2008:
 
         return all_res
 
-    def _tc_j(self, x):
+    def _tc_j(self, x: int) -> float:
         """Rescalar for J-Type Thermocouple"""
         return (0.021515 * x) + 495.0
 
-    def _tc_k(self, x):
+    def _tc_k(self, x: int) -> float:
         """Rescalar for K-Type Thermocouple"""
         return (0.023987 * x) + 586.0
 
-    def _tc_t(self, x):
+    def _tc_t(self, x: int) -> float:
         """Rescalar for T-Type Thermocouple"""
         return (0.009155 * x) + 100.0
 
-    def _tc_b(self, x):
+    def _tc_b(self, x: int) -> float:
         """Rescalar for B-Type Thermocouple"""
         return (0.023956 * x) + 1035.0
 
-    def _tc_r_s(self, x):
+    def _tc_r_s(self, x: int) -> float:
         """Rescalar for R-Type and S-Type Thermocouple"""
         return (0.02774 * x) + 859.0
 
-    def _tc_e(self, x):
+    def _tc_e(self, x: int) -> float:
         """Rescalar for E-Type Thermocouple"""
         return (0.018311 * x) + 400.0
 
-    def _tc_n(self, x):
+    def _tc_n(self, x: int) -> float:
         """Rescalar for N-Type Thermocouple"""
         return (0.022888 * x) + 550.0
