@@ -22,7 +22,7 @@ else:
 import json
 
 # Typing
-from typing import Self, Callable, TypeAlias, BinaryIO, TextIO, Any, Final
+from typing import Callable, TypeAlias, BinaryIO, TextIO, Any, Final
 
 import weakref
 
@@ -56,7 +56,7 @@ class DI2008Port:
     """
 
     def __init__(
-        self: Self,
+        self,
         channel: DI2008Channels | DI2008DigitalChannel,
         layout: int,
         connected_type: int,
@@ -84,7 +84,7 @@ class SerialConnectionWrapper:
     the actual connection (conn: serial.Serial)
     """
 
-    def __init__(self: Self, location: str, connection: serial.Serial) -> None:
+    def __init__(self, location: str, connection: serial.Serial) -> None:
         """
         SerialConnectionWrapper Signature:
         location: str
@@ -95,19 +95,19 @@ class SerialConnectionWrapper:
         self.serial_num: int | None = None
         self.ports: list[DI2008Port] | None = None
 
-    def send_command(self: Self, command: str) -> None:
+    def send_command(self, command: str) -> None:
         """Send a command without echoing"""
         self._send_command(command)
 
-    def echo(self: Self, command: str) -> str | None:
+    def echo(self, command: str) -> str | None:
         """Send a command and echo the result"""
         return self._send_command(command)
 
-    def close(self: Self) -> None:
+    def close(self) -> None:
         """Close the serial connection"""
         self.conn.close()
 
-    def _send_command(self: Self, command: str) -> str | None:
+    def _send_command(self, command: str) -> str | None:
         """Internal method for formatting, sending, and receiving DI2008 communication"""
         formatted_command: str = f"{command}\r"
         self.conn.write(formatted_command.encode())
@@ -138,7 +138,7 @@ class DI2008:
     """
 
     def __init__(
-        self: Self,
+        self,
         daq_layout_dict: dict[Any, Any],
         baud_rate: int = 115200,
         timeout: float = 0.0,
@@ -176,12 +176,12 @@ class DI2008:
         # Begin scanning on slected DI-2008s
         self.start_di2008s()
 
-    def _cleanup(self: Self) -> None:
+    def _cleanup(self) -> None:
         scw: SerialConnectionWrapper
         for scw in self.serial_connections:
             scw.close()
 
-    def find_di2008s(self: Self) -> None:
+    def find_di2008s(self) -> None:
         """
         Given the list of DI-2008 serial nums in the input dict, find these and generate their correct configurations
         """
@@ -352,7 +352,7 @@ class DI2008:
                 scw.send_command("start")
 
     def get_scw_port_configuration(
-        self: Self, layout_input: dict[Any, Any]
+        self, layout_input: dict[Any, Any]
     ) -> list[DI2008Port]:
         """
         Given the dict of a desired layout, configure it into the needed values in order
@@ -431,7 +431,7 @@ class DI2008:
         return DI2008Port(channel, final_layout, connected_type, rescalar)
 
     @classmethod
-    def from_config(cls, config: str | dict[Any, Any]) -> Self:
+    def from_config(cls, config: str | dict[Any, Any]):
         """
         Given some configuration file or dictionary, return a configured DI2008 object
         """
