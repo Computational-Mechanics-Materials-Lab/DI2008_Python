@@ -88,7 +88,9 @@ class _DI2008AllChannels(Enum):
     """
     Denote all 8 channels, not an actual value
     """
+
     _instance = 0
+
 
 DI2008AllChannels = _DI2008AllChannels._instance
 
@@ -107,7 +109,9 @@ class _DI2008UseDigital(Enum):
     """
     Denote if the digital channel is used, not an actual value
     """
+
     _instance = 0
+
 
 DI2008UseDigital = _DI2008UseDigital._instance
 
@@ -137,7 +141,9 @@ class _DI2008PSOption(Enum):
     """
     Denote that the PS is being set, not a value
     """
+
     _instance = 0
+
 
 DI2008PSOption = _DI2008PSOption._instance
 

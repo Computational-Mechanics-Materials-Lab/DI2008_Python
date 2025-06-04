@@ -46,11 +46,11 @@ A path to a .toml or .json file can also be passed in, formatted with the same n
 * Changing Scan Rate, Decimation, and Filtering Mode
 * Automatic ChannelStretch Synchronized Initialization
 * Reading configuration from .json/.toml files as well as raw Python dictionaries
+* Enforce cleanup on stopping
 
 ## Planned Features:
 * Changing Packet Rate Size
 * Interface with the `info` operator
-* Enforce cleanup on stopping
 * CJCDelta
 * Rate Measurement
 * LED Color

@@ -5,9 +5,10 @@ readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{name = "Clark Hensley", email = "ch3136@msstate.edu"}]
 maintainers = [{name = "Clark Hensley", email = "ch3136@msstate.edu"}]
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
     "pyserial>=3.5",
+    "tomli; python_version < '3.11'",
 ]
 dynamic = ["version"]
 

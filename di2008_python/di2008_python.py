@@ -14,6 +14,7 @@ import serial
 import serial.tools.list_ports
 
 import sys
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:
@@ -22,6 +23,8 @@ import json
 
 # Typing
 from typing import Self, Callable, TypeAlias, BinaryIO, TextIO, Any, Final
+
+import weakref
 
 # Enumerations for DAQ Settings
 from .di2008_layout_settings import (
@@ -101,8 +104,8 @@ class SerialConnectionWrapper:
         return self._send_command(command)
 
     def close(self: Self) -> None:
-       """Close the serial connection"""
-       self.conn.close()
+        """Close the serial connection"""
+        self.conn.close()
 
     def _send_command(self: Self, command: str) -> str | None:
         """Internal method for formatting, sending, and receiving DI2008 communication"""
@@ -164,6 +167,8 @@ class DI2008:
             DI2008TCType.T: self._tc_t,
         }
 
+        weakref.finalize(self, self._cleanup)
+
         # Locate selected DI-2008s
         self.find_di2008s()
         # Set selected DI-2008s
@@ -171,7 +176,12 @@ class DI2008:
         # Begin scanning on slected DI-2008s
         self.start_di2008s()
 
-    def find_di2008s(self) -> None:
+    def _cleanup(self: Self) -> None:
+        scw: SerialConnectionWrapper
+        for scw in self.serial_connections:
+            scw.close()
+
+    def find_di2008s(self: Self) -> None:
         """
         Given the list of DI-2008 serial nums in the input dict, find these and generate their correct configurations
         """
@@ -235,7 +245,9 @@ class DI2008:
         scw: SerialConnectionWrapper
         for scw in self.serial_connections:
             # Get the layout for this specific connection
-            individual_layout_dict: dict[Any, Any] = self.daq_layout_dict[scw.serial_num]
+            individual_layout_dict: dict[Any, Any] = self.daq_layout_dict[
+                scw.serial_num
+            ]
 
             # Check for a given ps value. If not, set to 0 (16 bytes)
             ps_value: DI2008PSSettings | None
@@ -339,7 +351,9 @@ class DI2008:
             for scw in self.serial_connections:
                 scw.send_command("start")
 
-    def get_scw_port_configuration(self: Self, layout_input: dict[Any, Any]) -> list[DI2008Port]:
+    def get_scw_port_configuration(
+        self: Self, layout_input: dict[Any, Any]
+    ) -> list[DI2008Port]:
         """
         Given the dict of a desired layout, configure it into the needed values in order
         """
@@ -490,7 +504,7 @@ class DI2008:
 
         final_config: dict[int, dict[Any, Any]] = {}
         initial_sns: dict[str, str] = {str(k): str(k) for k in formatted_config.keys()}
-        final_sns: dict[str, int]
+        final_sns: dict[str, int] = {}
 
         k_k: str
         k_v: str | int
