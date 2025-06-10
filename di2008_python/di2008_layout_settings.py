@@ -12,7 +12,7 @@ MIT License
 from enum import IntEnum, Enum
 
 
-class DI2008Layout(IntEnum):
+class DI2008AnalogLayout(IntEnum):
     """
     Describes the connected device to each port on the DAQ
     """
@@ -137,7 +137,7 @@ class DI2008FilterModes(Enum):
     MINIMUM = 3
 
 
-class _DI2008PSOption(Enum):
+class _DI2008PS(Enum):
     """
     Denote that the PS is being set, not a value
     """
@@ -145,7 +145,7 @@ class _DI2008PSOption(Enum):
     _instance = 0
 
 
-DI2008PSOption = _DI2008PSOption._instance
+DI2008PS = _DI2008PS._instance
 
 
 # Potential valid values for PS
@@ -158,3 +158,103 @@ class DI2008PSSettings(IntEnum):
     BYTES32 = 1
     BYTES64 = 2
     BYTES128 = 3
+
+
+class _DI2008BaudRate(Enum):
+    """
+    Denote that the Baud Rate is being set, not a value
+    """
+
+    _instance = 0
+
+
+DI2008BaudRate = _DI2008BaudRate._instance
+
+
+class _DI2008Timeout(Enum):
+    """
+    Denote that the timeout is being set, not a value
+    """
+
+    _instance = 0
+
+
+DI2008Timeout = _DI2008Timeout._instance
+
+
+class _DI2008SerialNum(Enum):
+    """
+    Denote that the timeout is being set, not a value
+    """
+
+    _instance = 0
+
+
+DI2008SerialNum = _DI2008SerialNum._instance
+
+
+class _DI2008HardwareID(Enum):
+    """
+    Sentinel for setting HWID
+    """
+
+    _instance = 0
+
+
+DI2008HardwareID = _DI2008HardwareID._instance
+
+
+class _DI2008GlobalAnalogLayout(Enum):
+    _instance = 0
+
+
+DI2008GlobalAnalogLayout = _DI2008GlobalAnalogLayout._instance
+
+
+class _DI2008GlobalPS(Enum):
+    _instance = 0
+
+
+DI2008GlobalPS = _DI2008GlobalPS._instance
+
+
+class DI2008GlobalScanRateSettings(Enum):
+    """
+    Sentinels to manage the values related to scan rate and filtering
+    """
+
+    SRATE = 0
+    DEC = 1
+    FILTER = 2
+
+
+class _DI2008GlobalBaudRateSetting(Enum):
+    _instance = 0
+
+
+DI2008GlobalBaudRateSetting = _DI2008GlobalBaudRateSetting._instance
+
+
+class _DI2008GlobalTimeoutSetting(Enum):
+    _instance = 0
+
+
+DI2008GlobalTimeoutSetting = _DI2008GlobalTimeoutSetting._instance
+
+
+class _DI2008GlobalSerialNums(Enum):
+    _instance = 0
+
+
+DI2008GlobalSerialNums = _DI2008GlobalSerialNums._instance
+
+
+class _DI2008GlobalHardwareID(Enum):
+    """
+    Sentinel for setting HWID
+    """
+
+    _instance = 0
+
+
+DI2008GlobalHardwareID = _DI2008GlobalHardwareID._instance
