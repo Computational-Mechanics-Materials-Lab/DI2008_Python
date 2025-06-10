@@ -14,8 +14,8 @@ from .di2008_layout_settings import (
     DI2008AnalogLayout,
     DI2008TCType,
     DI2008ADCRange,
-    DI2008Channels,
-    DI2008AllChannels,
+    DI2008AnalogChannels,
+    DI2008AllAnalogChannels,
     DI2008DigitalChannel,
     # DI2008UseDigital,
     DI2008ScanRateSettings,
@@ -38,7 +38,7 @@ from .di2008_layout_settings import (
 __author__ = "Clark Hensley, J. Logan Betts, and Matthew W. Priddy"
 __copyright__ = "Copyright 2025"
 __license__ = "MIT"
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 __maintainer__ = "Clark Hensley"
 __email__ = "ch3136@msstate.edu"
 __status__ = "Production"
@@ -49,8 +49,8 @@ __all__ = [
     "DI2008AnalogLayout",
     "DI2008TCType",
     "DI2008ADCRange",
-    "DI2008Channels",
-    "DI2008AllChannels",
+    "DI2008AnalogChannels",
+    "DI2008AllAnalogChannels",
     "DI2008DigitalChannel",
     # "DI2008UseDigital",
     "DI2008ScanRateSettings",

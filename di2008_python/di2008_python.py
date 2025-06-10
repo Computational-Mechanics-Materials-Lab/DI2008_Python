@@ -31,9 +31,9 @@ from .di2008_layout_settings import (
     DI2008AnalogLayout,
     DI2008TCType,
     DI2008ADCRange,
-    DI2008Channels,
-    _DI2008AllChannels,
-    DI2008AllChannels,
+    DI2008AnalogChannels,
+    _DI2008AllAnalogChannels,
+    DI2008AllAnalogChannels,
     # DI2008DigitalChannel,
     # DI2008UseDigital,
     DI2008ScanRateSettings,
@@ -55,7 +55,7 @@ from .di2008_layout_settings import (
 )
 
 
-DI2008ChannelsAlias: TypeAlias = DI2008Channels  # | DI2008DigitalChannel
+DI2008ChannelsAlias: TypeAlias = DI2008AnalogChannels  # | DI2008DigitalChannel
 
 
 def print_all_daq_metadata(hwid: str = "USB VID:PID=0683") -> None:
@@ -247,7 +247,7 @@ class _DI2008Instance:
 
     def manage_input_data(self) -> None:
         global_to_local_mapping: Final[dict[Any, Any]] = {
-            DI2008GlobalAnalogLayout: DI2008AllChannels,
+            DI2008GlobalAnalogLayout: DI2008AllAnalogChannels,
             DI2008GlobalPS: DI2008PS,
             DI2008GlobalScanRateSettings.SRATE: DI2008ScanRateSettings.SRATE,
             DI2008GlobalScanRateSettings.DEC: DI2008ScanRateSettings.DEC,
@@ -454,10 +454,10 @@ class _DI2008Instance:
         if channel_filter_dict := self.daq_layout_dict.get(
             DI2008ScanRateSettings.FILTER
         ):
-            key: DI2008ChannelsAlias | _DI2008AllChannels
+            key: DI2008ChannelsAlias | _DI2008AllAnalogChannels
             val: DI2008FilterModes
             for key, val in channel_filter_dict.items():
-                if key is DI2008AllChannels:
+                if key is DI2008AllAnalogChannels:
                     self.scw.send_command(f"filter * {val.value}")
 
                 else:
@@ -484,17 +484,18 @@ class _DI2008Instance:
             | tuple[DI2008AnalogLayout, DI2008TCType | DI2008ADCRange]
             | None
         )
-        channel: DI2008Channels
+        channel: DI2008AnalogChannels
         # If the same setting is used for all channels
-        if layout := layout_input.get(DI2008AllChannels):
-            for channel in DI2008Channels:
+        if layout := layout_input.get(DI2008AllAnalogChannels):
+            for channel in DI2008AnalogChannels:
                 ports.append(self.get_di2008_port_layout(channel, layout))
         # If there are different settings given for any channel
         else:
-            for channel in DI2008Channels:
+            for channel in DI2008AnalogChannels:
                 layout = layout_input.get(channel, DI2008AnalogLayout.IGNORE)
                 assert layout is not None
-                ports.append(self.get_di2008_port_layout(channel, layout))
+                if layout is not DI2008AnalogLayout.IGNORE:
+                    ports.append(self.get_di2008_port_layout(channel, layout))
 
         ## See if this DAQ uses the digital channel:
         # if layout_input.get(DI2008UseDigital):
@@ -511,7 +512,7 @@ class _DI2008Instance:
 
     def get_di2008_port_layout(
         self,
-        channel: DI2008Channels,
+        channel: DI2008AnalogChannels,
         layout: DI2008AnalogLayout
         | tuple[DI2008AnalogLayout, DI2008TCType | DI2008ADCRange],
     ) -> _DI2008Port:
@@ -547,9 +548,9 @@ class _DI2008Instance:
             rescalar = lambda x: adc_range.value[1] * (x / 32768.0)
 
         # Instead of truly ignoring, treat as an empty B-type Thermocouple. Won't be read from, whether or not something is connected
-        elif connected_type is DI2008AnalogLayout.IGNORE:
-            final_layout = DI2008AnalogLayout.TC | channel
-            rescalar = lambda x: x
+        # elif connected_type is DI2008AnalogLayout.IGNORE:
+        #    final_layout = DI2008AnalogLayout.TC | channel
+        #    rescalar = lambda x: x
 
         else:
             raise Exception("Not a valid layout!")
@@ -723,14 +724,17 @@ class _DI2008Instance:
 
     def read_daq(self) -> dict[DI2008ChannelsAlias, float | int]:
         res: dict[DI2008ChannelsAlias, float | int] = {}
-        port: _DI2008Port
         assert self.scw.ports is not None
-        for port in self.scw.ports:
-            while self.scw.conn.in_waiting < 2:
-                pass
+        num_ports = len(self.scw.ports)
+        while self.scw.conn.in_waiting < (2 * num_ports):
+            pass
+        raw_bytes: bytes = bytes(self.scw.conn.read(2 * num_ports))
+        self.scw.conn.flush()
 
-            raw_byte: bytes = bytes(self.scw.conn.read(2))
-            self.scw.conn.flush()
+        i: int
+        port: _DI2008Port
+        for i, port in enumerate(self.scw.ports):
+            these_two_bytes: bytes = raw_bytes[2 * i : 2 * (i + 1)]
 
             formatted_byte: int
             # Ignore ports marked as such
@@ -740,13 +744,13 @@ class _DI2008Instance:
             ## Digital Port (must zero-out upper bits
             # elif port.connected_type is DI2008AnalogLayout.DI:
             #    formatted_byte = (
-            #        int.from_bytes(raw_byte, byteorder="little", signed=True) & 0x7F
+            #        int.from_bytes(raw_bytes, byteorder="little", signed=True) & 0x7F
             #    )
 
             # All other types
             else:
                 formatted_byte = int.from_bytes(
-                    raw_byte, byteorder="little", signed=True
+                    these_two_bytes, byteorder="little", signed=True
                 )
 
             # Rescale as necessary
@@ -754,7 +758,6 @@ class _DI2008Instance:
             assert isinstance(port.channel, DI2008ChannelsAlias)
             res[port.channel] = final
 
-        # print(res)
         return res
 
     def _tc_j(self, x: int) -> float:

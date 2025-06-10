@@ -69,7 +69,7 @@ class DI2008ADCRange(Enum):
     V50 = ((0x8 << 8), 50.0)
 
 
-class DI2008Channels(IntEnum):
+class DI2008AnalogChannels(IntEnum):
     """
     Enumerates the 8 Analog Channels
     """
@@ -84,7 +84,7 @@ class DI2008Channels(IntEnum):
     CH8 = 0x7
 
 
-class _DI2008AllChannels(Enum):
+class _DI2008AllAnalogChannels(Enum):
     """
     Denote all 8 channels, not an actual value
     """
@@ -92,7 +92,7 @@ class _DI2008AllChannels(Enum):
     _instance = 0
 
 
-DI2008AllChannels = _DI2008AllChannels._instance
+DI2008AllAnalogChannels = _DI2008AllAnalogChannels._instance
 
 
 class DI2008DigitalChannel(IntEnum):
