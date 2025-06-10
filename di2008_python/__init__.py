@@ -38,7 +38,7 @@ from .di2008_layout_settings import (
 __author__ = "Clark Hensley, J. Logan Betts, and Matthew W. Priddy"
 __copyright__ = "Copyright 2025"
 __license__ = "MIT"
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __maintainer__ = "Clark Hensley"
 __email__ = "ch3136@msstate.edu"
 __status__ = "Production"

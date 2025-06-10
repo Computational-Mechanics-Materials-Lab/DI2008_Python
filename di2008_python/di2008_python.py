@@ -179,6 +179,7 @@ class SerialConnectionWrapper:
                 res = res.replace(chr(0), "")
                 final += res
 
+            self.conn.flush()
             return final
 
 
@@ -729,6 +730,7 @@ class _DI2008Instance:
                 pass
 
             raw_byte: bytes = bytes(self.scw.conn.read(2))
+            self.scw.conn.flush()
 
             formatted_byte: int
             # Ignore ports marked as such
