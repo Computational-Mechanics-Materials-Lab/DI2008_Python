@@ -23,7 +23,7 @@ class DI2008AnalogLayout(IntEnum):
 
     # For enabling the Digital Channel
     # 0b0000000000001000
-    DI = 0x0008
+    #DI = 0x0008
 
     # Used as a sentinel to ignore
     # 0b1111111111111111
@@ -95,27 +95,6 @@ class _DI2008AllAnalogChannels(Enum):
 DI2008AllAnalogChannels = _DI2008AllAnalogChannels._instance
 
 
-class DI2008DigitalChannel(IntEnum):
-    """
-    This uses an IntEnum to associate the name, "DI" with the number for it, even though this is a singleton enum. This is not used by the user, just ste on the back-end
-    """
-
-    # The digital channel is
-    # 0b0000000000001000
-    DI = 0x8
-
-
-class _DI2008UseDigital(Enum):
-    """
-    Denote if the digital channel is used, not an actual value
-    """
-
-    _instance = 0
-
-
-DI2008UseDigital = _DI2008UseDigital._instance
-
-
 class DI2008ScanRateSettings(Enum):
     """
     Sentinels to manage the values related to scan rate and filtering
@@ -182,7 +161,7 @@ class _DI2008Timeout(Enum):
 DI2008Timeout = _DI2008Timeout._instance
 
 
-class _DI2008SerialNum(Enum):
+class _DI2008SerialNums(Enum):
     """
     Denote that the timeout is being set, not a value
     """
@@ -190,7 +169,7 @@ class _DI2008SerialNum(Enum):
     _instance = 0
 
 
-DI2008SerialNum = _DI2008SerialNum._instance
+DI2008SerialNums = _DI2008SerialNums._instance
 
 
 class _DI2008HardwareID(Enum):
@@ -202,59 +181,3 @@ class _DI2008HardwareID(Enum):
 
 
 DI2008HardwareID = _DI2008HardwareID._instance
-
-
-class _DI2008GlobalAnalogLayout(Enum):
-    _instance = 0
-
-
-DI2008GlobalAnalogLayout = _DI2008GlobalAnalogLayout._instance
-
-
-class _DI2008GlobalPS(Enum):
-    _instance = 0
-
-
-DI2008GlobalPS = _DI2008GlobalPS._instance
-
-
-class DI2008GlobalScanRateSettings(Enum):
-    """
-    Sentinels to manage the values related to scan rate and filtering
-    """
-
-    SRATE = 0
-    DEC = 1
-    FILTER = 2
-
-
-class _DI2008GlobalBaudRateSetting(Enum):
-    _instance = 0
-
-
-DI2008GlobalBaudRateSetting = _DI2008GlobalBaudRateSetting._instance
-
-
-class _DI2008GlobalTimeoutSetting(Enum):
-    _instance = 0
-
-
-DI2008GlobalTimeoutSetting = _DI2008GlobalTimeoutSetting._instance
-
-
-class _DI2008GlobalSerialNums(Enum):
-    _instance = 0
-
-
-DI2008GlobalSerialNums = _DI2008GlobalSerialNums._instance
-
-
-class _DI2008GlobalHardwareID(Enum):
-    """
-    Sentinel for setting HWID
-    """
-
-    _instance = 0
-
-
-DI2008GlobalHardwareID = _DI2008GlobalHardwareID._instance

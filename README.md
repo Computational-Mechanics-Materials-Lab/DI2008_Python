@@ -2,7 +2,6 @@
 
 ## About
 Interface for the DI-2008 in Python.
-Version 1.2.0
 
 Python 3.10+
 
@@ -18,32 +17,49 @@ pip install di2008-python
 
 See Available DI-2008s:
 ```py
-from di2008_python import print_all_daq_metadata
-print_all_daq_metadata()
+from di2008_python import print_all_di2008_metadata
+print_all_di2008_metadata()
 ```
 
 Instantiate DI2008 Object with Dictionary of Parameters:
 ```py
-from di2008_python import DI2008, DI2008GlobalAnalogLayout, DI2008GlobalScanRateSettings, DI2008AllAnalogChannels, DI2008FilterModes, DI2008GlobalSerialNums, DI2008AnalogChannels, DI2008AnalogLayout, DI2008TCType, DI2008ScanRateSettings
+from di2008_python import (
+    DI2008,
+    DI2008AnalogChannels,
+    DI2008AllAnalogChannels,
+    DI2008AnalogLayout,
+    DI2008TCType,
+    DI2008ScanRateSettings,
+    DI2008FilterModes,
+    DI2008SerialNums
+)
 
-# Enable the DI-2008 with a K-Type thermocopule in Analog Channel 1, an N-Type Thermocouple in Analog Channel 3, and the Digital Channel active
-di2008 = DI2008({
+# Create an array of DI-2008s with relevant settings
+di2008_array = DI2008({
         # Global Settings
-        DI2008GlobalAnalogLayout: (DI2008Layout.TC, DI2008TCType.K)
-        DI2008GlobalScanRateSettings.SRATE: 4,
-        DI2008GlobalScanRateSettings.DEC: 1,
-        DI2008GlobalScanRateSettings.FILTER: {
+        DI2008AllAnalogChannels: (DI2008AnalogLayout.TC, DI2008TCType.K),
+        DI2008ScanRateSettings.SRATE: 4,
+        DI2008ScanRateSettings.DEC: 1,
+        DI2008ScanRateSettings.FILTER: {
             DI2008AllAnalogChannels: DI2008FilterModes.AVERAGE,
             },
-        # Serial Numbers of DAQs to apply
-        DI2008GlobalSerialNums: [<DI-2008 Serial Num>, <DI-2008 Serial Num>, ...],
-        # Overwriting settings for a given DI-2008
+        # Serial Numbers of DI-2008s to apply
+        DI2008lSerialNums: [<DI-2008 Serial Num>, <DI-2008 Serial Num>, ...],
+        # Overwriting settings for a given DI-2008 (Not one of the ones listed above)
         <DI-2008 Serial Num>: {
             DI2008AnalogChannels.CH1: (DI2008AnalogLayout.TC, DI2008TCType.N),
             DI2008ScanRateSettings.FILTER: {
                 DI2008AnalogChannels.CH1: DI2008FilterModes.LAST_POINT,
                 }
             }
+
+# Synchronized start of DI2008s
+di2008_array.start_di2008s()
+
+# Read from the DI2008s
+while True:
+    data = di2008_array.read_di2008s()
+    print(data)
 ```
 
 This interface uses named enumerations to ensure that what settings are being used is clear and concise
