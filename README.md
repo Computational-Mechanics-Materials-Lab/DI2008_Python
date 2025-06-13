@@ -80,6 +80,7 @@ Per the DI-2008 Protocol, if a single analog channel is enabled, the maximum sam
 
 ## Planned Features:
 * Reading configuration from .json/.toml files as well as raw Python dictionaries
+    * The backend for this is implement as of version 1.4.0. The API interface needs work.
 * Digital Channels
 * Specify Digital Input as well as Output
 * CJCDelta

@@ -9,10 +9,30 @@ This file is part of DI2008_Python, https://github.com/Computational-Mechanics-M
 MIT License
 """
 
-from enum import IntEnum, Enum
+from enum import Enum, IntEnum
 
 
-class DI2008AnalogLayout(IntEnum):
+class NamedEnum(Enum):
+    @property
+    def whole_name(self) -> str:
+        return f"{self.__class__.__name__}.{self.name}"
+
+    @classmethod
+    def get_whole_name(cls) -> str:
+        return f"{cls.__name__}"
+
+
+class NamedIntEnum(IntEnum):
+    @property
+    def whole_name(self) -> str:
+        return f"{self.__class__.__name__}.{self.name}"
+
+    @classmethod
+    def get_whole_name(cls) -> str:
+        return f"{cls.__name__}"
+
+
+class DI2008AnalogLayout(NamedIntEnum):
     """
     Describes the connected device to each port on the DAQ
     """
@@ -23,7 +43,7 @@ class DI2008AnalogLayout(IntEnum):
 
     # For enabling the Digital Channel
     # 0b0000000000001000
-    #DI = 0x0008
+    # DI = 0x0008
 
     # Used as a sentinel to ignore
     # 0b1111111111111111
@@ -35,7 +55,7 @@ class DI2008AnalogLayout(IntEnum):
     ADC = 0x0000
 
 
-class DI2008TCType(IntEnum):
+class DI2008TCType(NamedIntEnum):
     """
     Enumerates the types of Thermocouple which the DI-2008 cna read
     """
@@ -50,7 +70,7 @@ class DI2008TCType(IntEnum):
     T = 0x7 << 8
 
 
-class DI2008ADCRange(Enum):
+class DI2008ADCRange(NamedEnum):
     """
     Enumerates the voltage ranges for ADC, as well as the necessary multiplier for rescaling
     """
@@ -69,7 +89,7 @@ class DI2008ADCRange(Enum):
     V50 = ((0x8 << 8), 50.0)
 
 
-class DI2008AnalogChannels(IntEnum):
+class DI2008AnalogChannels(NamedIntEnum):
     """
     Enumerates the 8 Analog Channels
     """
@@ -84,7 +104,7 @@ class DI2008AnalogChannels(IntEnum):
     CH8 = 0x7
 
 
-class _DI2008AllAnalogChannels(Enum):
+class _DI2008AllAnalogChannels(NamedEnum):
     """
     Denote all 8 channels, not an actual value
     """
@@ -95,7 +115,7 @@ class _DI2008AllAnalogChannels(Enum):
 DI2008AllAnalogChannels = _DI2008AllAnalogChannels._instance
 
 
-class DI2008ScanRateSettings(Enum):
+class DI2008ScanRateSettings(NamedEnum):
     """
     Sentinels to manage the values related to scan rate and filtering
     """
@@ -105,7 +125,7 @@ class DI2008ScanRateSettings(Enum):
     FILTER = 2
 
 
-class DI2008FilterModes(Enum):
+class DI2008FilterModes(NamedIntEnum):
     """
     Values for Filtering of the DI-2008
     """
@@ -116,7 +136,7 @@ class DI2008FilterModes(Enum):
     MINIMUM = 3
 
 
-class _DI2008PS(Enum):
+class _DI2008PS(NamedEnum):
     """
     Denote that the PS is being set, not a value
     """
@@ -128,7 +148,7 @@ DI2008PS = _DI2008PS._instance
 
 
 # Potential valid values for PS
-class DI2008PSSettings(IntEnum):
+class DI2008PSSettings(NamedIntEnum):
     """
     Potential values for the PS setting
     """
@@ -139,7 +159,7 @@ class DI2008PSSettings(IntEnum):
     BYTES128 = 3
 
 
-class _DI2008BaudRate(Enum):
+class _DI2008BaudRate(NamedEnum):
     """
     Denote that the Baud Rate is being set, not a value
     """
@@ -150,7 +170,7 @@ class _DI2008BaudRate(Enum):
 DI2008BaudRate = _DI2008BaudRate._instance
 
 
-class _DI2008Timeout(Enum):
+class _DI2008Timeout(NamedEnum):
     """
     Denote that the timeout is being set, not a value
     """
@@ -161,7 +181,7 @@ class _DI2008Timeout(Enum):
 DI2008Timeout = _DI2008Timeout._instance
 
 
-class _DI2008SerialNums(Enum):
+class _DI2008SerialNums(NamedEnum):
     """
     Denote that the timeout is being set, not a value
     """
@@ -172,7 +192,7 @@ class _DI2008SerialNums(Enum):
 DI2008SerialNums = _DI2008SerialNums._instance
 
 
-class _DI2008HardwareID(Enum):
+class _DI2008HardwareID(NamedEnum):
     """
     Sentinel for setting HWID
     """

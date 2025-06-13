@@ -13,9 +13,13 @@ import time
 import serial
 import serial.tools.list_ports
 
-from typing import Callable, TypeAlias, Any, Final
+from typing import Callable, Any
+from collections.abc import Sequence
+from enum import IntEnum
 
 import weakref
+
+import json
 
 # Enumerations for DI-2008 Settings
 from .di2008_layout_settings import (
@@ -24,7 +28,6 @@ from .di2008_layout_settings import (
     DI2008ADCRange,
     DI2008AnalogChannels,
     DI2008AllAnalogChannels,
-    _DI2008AllAnalogChannels,
     DI2008ScanRateSettings,
     DI2008FilterModes,
     DI2008PS,
@@ -34,6 +37,207 @@ from .di2008_layout_settings import (
     DI2008SerialNums,
     DI2008HardwareID,
 )
+
+
+def _json_const_to_str(layout: dict[Any, Any]) -> dict[Any, Any]:
+    k: Any
+    v: Any
+    new_layout: dict[Any, Any] = {}
+    new_k: Any
+    new_v: Any
+    for k, v in layout.items():
+        if (
+            ((type(k) is int) and not isinstance(k, IntEnum))
+            or (type(k) is float)
+            or (type(k) is bool)
+        ):
+            new_k = k
+        else:
+            try:
+                if isinstance(k, str):
+                    new_k = int(k)
+                else:
+                    raise ValueError
+            except (ValueError, TypeError):
+                try:
+                    if isinstance(k, str):
+                        new_k = int(k, base=16)
+                    else:
+                        raise ValueError
+                except (ValueError, TypeError):
+                    if hasattr(k, "whole_name"):
+                        new_k = k.whole_name
+                    elif hasattr(k, "get_whole_name"):
+                        new_k = k.get_whole_name()
+                    else:
+                        raise Exception
+
+        if (
+            ((type(v) is int) and not isinstance(v, IntEnum))
+            or (type(v) is float)
+            or (type(v) is bool)
+        ):
+            new_v = v
+        elif isinstance(v, dict):
+            new_v = _json_const_to_str(v)
+        elif isinstance(v, Sequence) and not isinstance(v, str):
+            new_v = []
+            _v: Any
+            for _v in v:
+                if isinstance(_v, dict):
+                    new_v.append(_json_const_to_str(_v))
+                else:
+                    if hasattr(_v, "whole_name"):
+                        new_v.append(_v.whole_name)
+                    elif hasattr(_v, "get_whole_name"):
+                        new_v.append(_v.get_whole_name())
+                    else:
+                        new_v.append(_v)
+
+            new_v = tuple(new_v)
+
+        else:
+            try:
+                if isinstance(v, str):
+                    new_v = int(v)
+                else:
+                    raise ValueError
+            except (ValueError, TypeError):
+                try:
+                    if isinstance(v, str):
+                        new_v = int(v, base=16)
+                    else:
+                        raise ValueError
+                except (ValueError, TypeError):
+                    if hasattr(v, "whole_name"):
+                        new_v = v.whole_name
+                    elif hasattr(v, "get_whole_name"):
+                        new_v = v.get_whole_name()
+                    else:
+                        new_v = v
+
+        new_layout[new_k] = new_v
+
+    return new_layout
+
+
+def _json_str_to_const(
+    layout: dict[Any, Any], mapping: dict[Any, Any]
+) -> dict[Any, Any]:
+    k: Any
+    v: Any
+    new_layout: dict[Any, Any] = {}
+    new_k: Any
+    new_v: Any
+    for k, v in layout.items():
+        if (type(k) is int) or (type(k) is float) or (type(k) is bool):
+            new_k = k
+        else:
+            try:
+                new_k = int(k)
+            except (ValueError, TypeError):
+                try:
+                    new_k = int(k, base=16)
+                except (ValueError, TypeError):
+                    new_k = mapping.get(k, k)
+
+        if (type(v) is int) or (type(v) is float) or (type(v) is bool):
+            new_v = v
+        elif isinstance(v, dict):
+            new_v = _json_str_to_const(v, mapping)
+        elif isinstance(v, Sequence) and not isinstance(v, str):
+            new_v = []
+            _v: Any
+            for _v in v:
+                if isinstance(_v, dict):
+                    new_v.append(_json_str_to_const(_v, mapping))
+                else:
+                    new_v.append(mapping.get(_v, _v))
+
+            new_v = tuple(new_v)
+
+        else:
+            try:
+                new_v = int(v)
+            except (ValueError, TypeError):
+                try:
+                    new_v = int(v, base=16)
+                except (ValueError, TypeError):
+                    new_v = mapping.get(v, v)
+
+        new_layout[new_k] = new_v
+
+    return new_layout
+
+
+def layout_to_json(layout: dict[Any, Any]) -> str:
+    new_layout: dict[Any, Any] = _json_const_to_str(layout)
+    return json.dumps(new_layout)
+
+
+def json_to_layout(json_str: str) -> dict[Any, Any]:
+    str_to_const_mapping: dict[str, Any] = {
+        DI2008AnalogLayout.get_whole_name(): DI2008AnalogLayout,
+        DI2008AnalogLayout.TC.whole_name: DI2008AnalogLayout.TC,
+        DI2008AnalogLayout.IGNORE.whole_name: DI2008AnalogLayout.IGNORE,
+        DI2008AnalogLayout.ADC.whole_name: DI2008AnalogLayout.ADC,
+        DI2008TCType.get_whole_name(): DI2008TCType,
+        DI2008TCType.B.whole_name: DI2008TCType.B,
+        DI2008TCType.E.whole_name: DI2008TCType.E,
+        DI2008TCType.J.whole_name: DI2008TCType.J,
+        DI2008TCType.K.whole_name: DI2008TCType.K,
+        DI2008TCType.N.whole_name: DI2008TCType.N,
+        DI2008TCType.R.whole_name: DI2008TCType.R,
+        DI2008TCType.S.whole_name: DI2008TCType.S,
+        DI2008TCType.T.whole_name: DI2008TCType.T,
+        DI2008ADCRange.get_whole_name(): DI2008ADCRange,
+        DI2008ADCRange.mV10.whole_name: DI2008ADCRange.mV10,
+        DI2008ADCRange.mV25.whole_name: DI2008ADCRange.mV25,
+        DI2008ADCRange.mV50.whole_name: DI2008ADCRange.mV50,
+        DI2008ADCRange.mV100.whole_name: DI2008ADCRange.mV100,
+        DI2008ADCRange.mV250.whole_name: DI2008ADCRange.mV250,
+        DI2008ADCRange.mV500.whole_name: DI2008ADCRange.mV500,
+        DI2008ADCRange.V1.whole_name: DI2008ADCRange.V1,
+        DI2008ADCRange.V2_5.whole_name: DI2008ADCRange.V2_5,
+        DI2008ADCRange.V5.whole_name: DI2008ADCRange.V5,
+        DI2008ADCRange.V10.whole_name: DI2008ADCRange.V10,
+        DI2008ADCRange.V25.whole_name: DI2008ADCRange.V25,
+        DI2008ADCRange.V50.whole_name: DI2008ADCRange.V50,
+        DI2008AnalogChannels.get_whole_name(): DI2008AnalogChannels,
+        DI2008AnalogChannels.CH1.whole_name: DI2008AnalogChannels.CH1,
+        DI2008AnalogChannels.CH2.whole_name: DI2008AnalogChannels.CH2,
+        DI2008AnalogChannels.CH3.whole_name: DI2008AnalogChannels.CH3,
+        DI2008AnalogChannels.CH4.whole_name: DI2008AnalogChannels.CH4,
+        DI2008AnalogChannels.CH5.whole_name: DI2008AnalogChannels.CH5,
+        DI2008AnalogChannels.CH6.whole_name: DI2008AnalogChannels.CH6,
+        DI2008AnalogChannels.CH7.whole_name: DI2008AnalogChannels.CH7,
+        DI2008AnalogChannels.CH8.whole_name: DI2008AnalogChannels.CH8,
+        DI2008AllAnalogChannels.whole_name: DI2008AllAnalogChannels,
+        DI2008ScanRateSettings.get_whole_name(): DI2008ScanRateSettings,
+        DI2008ScanRateSettings.SRATE.whole_name: DI2008ScanRateSettings.SRATE,
+        DI2008ScanRateSettings.DEC.whole_name: DI2008ScanRateSettings.DEC,
+        DI2008ScanRateSettings.FILTER.whole_name: DI2008ScanRateSettings.FILTER,
+        DI2008FilterModes.get_whole_name(): DI2008FilterModes,
+        DI2008FilterModes.LAST_POINT.whole_name: DI2008FilterModes.LAST_POINT,
+        DI2008FilterModes.AVERAGE.whole_name: DI2008FilterModes.AVERAGE,
+        DI2008FilterModes.MAXIMUM.whole_name: DI2008FilterModes.MAXIMUM,
+        DI2008FilterModes.MINIMUM.whole_name: DI2008FilterModes.MINIMUM,
+        DI2008PS.whole_name: DI2008PS,
+        DI2008PSSettings.get_whole_name(): DI2008PSSettings,
+        DI2008PSSettings.BYTES16.whole_name: DI2008PSSettings.BYTES16,
+        DI2008PSSettings.BYTES32.whole_name: DI2008PSSettings.BYTES32,
+        DI2008PSSettings.BYTES64.whole_name: DI2008PSSettings.BYTES64,
+        DI2008PSSettings.BYTES128.whole_name: DI2008PSSettings.BYTES128,
+        DI2008BaudRate.whole_name: DI2008BaudRate,
+        DI2008Timeout.whole_name: DI2008Timeout,
+        DI2008SerialNums.whole_name: DI2008SerialNums,
+        DI2008HardwareID.whole_name: DI2008HardwareID,
+    }
+    stringified_layout: dict[Any, Any] = json.loads(json_str)
+    new_layout: dict[Any, Any] = _json_str_to_const(
+        stringified_layout, str_to_const_mapping
+    )
+    return new_layout
 
 
 def print_all_di2008_metadata(hwid: str = "USB VID:PID=0683") -> None:
@@ -72,11 +276,11 @@ def print_all_di2008_metadata(hwid: str = "USB VID:PID=0683") -> None:
             assert info_9 is not None
             info_9 = info_9.split("info 9 ")[1]
 
-            print(f'''Info 0: {info_0} (Always returns "DATAQ")
+            print(f"""Info 0: {info_0} (Always returns "DATAQ")
 Info 1: {info_1} (Device PID, should be "2008")
 Info 2: {int(info_2, base=16) / 100} (Device Firmware Version)
 Info 6: {hex(int(info_6, base=16))} (Device Serial Number)
-Info 9: {info_9} (Current Sample Rate Divisor)\n''')
+Info 9: {info_9} (Current Sample Rate Divisor)\n""")
             scw.close()
 
 
@@ -206,16 +410,13 @@ class _DI2008Instance:
         self.global_config.update(self.di2008_layout_dict)
         self.di2008_layout_dict = self.global_config
 
-        self.target_hwid = self.di2008_layout_dict.pop(
+        self.target_hwid: str = self.di2008_layout_dict.pop(
             DI2008HardwareID, "USB VID:PID=0683"
         )
-        self.baud_rate = self.di2008_layout_dict.pop(DI2008BaudRate, 115200)
-        self.timeout = self.di2008_layout_dict.pop(DI2008Timeout, 0.0)
+        self.baud_rate: int = self.di2008_layout_dict.pop(DI2008BaudRate, 115200)
+        self.timeout: float = self.di2008_layout_dict.pop(DI2008Timeout, 0.0)
 
         self.scw: SerialConnectionWrapper | None = None
-        self.target_hwid: str
-        self.baud_rate: int
-        self.timeout: float
 
         self.tc_rescalars: dict[DI2008TCType, Callable[[int], float]] = {
             DI2008TCType.B: self._tc_b,
@@ -269,11 +470,11 @@ class _DI2008Instance:
         assert info_9 is not None
         info_9 = info_9.split("info 9 ")[1]
 
-        print(f'''Info 0: {info_0} (Always returns "DATAQ")
+        print(f"""Info 0: {info_0} (Always returns "DATAQ")
 Info 1: {info_1} (Device PID, should be "2008")
 Info 2: {int(info_2, base=16) / 100} (Device Firmware Version)
 Info 6: {hex(int(info_6, base=16))} (Device Serial Number)
-Info 9: {info_9} (Current Sample Rate Divisor)''')
+Info 9: {info_9} (Current Sample Rate Divisor)""")
 
     def find_di2008s(self) -> None:
         """
@@ -330,7 +531,9 @@ Info 9: {info_9} (Current Sample Rate Divisor)''')
 
         # If not DI-2008s were connected to
         if self.scw is None:
-            raise Exception(f"Could not get DI-2008 for serial number: {self.serial_num}")
+            raise Exception(
+                f"Could not get DI-2008 for serial number: {self.serial_num}"
+            )
 
     def configure_di2008s(self) -> None:
         """
@@ -412,7 +615,9 @@ Info 9: {info_9} (Current Sample Rate Divisor)''')
             | None
         )
 
-        default_layout: Any = layout_input.get(DI2008AllAnalogChannels, DI2008AnalogLayout.IGNORE)
+        default_layout: Any = layout_input.get(
+            DI2008AllAnalogChannels, DI2008AnalogLayout.IGNORE
+        )
 
         channel: DI2008AnalogChannels
         for channel in DI2008AnalogChannels:
@@ -587,6 +792,7 @@ class DI2008:
             # As taken from the docs (top of page 5)
             syncget_0_vals: list[int] = []
             for di2008 in self.di2008s:
+                assert di2008.scw is not None
                 syncget_0_resp: str | None = di2008.scw.echo("syncget 0")
                 assert syncget_0_resp is not None
                 syncget_0: str | int = syncget_0_resp.split(" ")[-1]
@@ -596,6 +802,7 @@ class DI2008:
             syncget_0_c: int = sum(syncget_0_vals) // len(syncget_0_vals)
             syncget_3_vals: list[int] = []
             for di2008 in self.di2008s:
+                assert di2008.scw is not None
                 syncget_3_resp: str | None = di2008.scw.echo("syncget 3")
                 assert syncget_3_resp is not None
                 syncget_3: str | int = syncget_3_resp.split(" ")[-1]
@@ -605,10 +812,12 @@ class DI2008:
             s3v0: int = syncget_3_vals[0]
             if any(s != s3v0 for s in syncget_3_vals) or s3v0 != syncget_0_c:
                 for di2008 in self.di2008s:
+                    assert di2008.scw is not None
                     di2008.scw.send_command(f"syncset {syncget_0_c}")
 
                 time.sleep(1.0)
 
+            assert self.di2008s[0].scw is not None
             syncget_f_resp: str | None = self.di2008s[0].scw.echo("syncget 2")
             assert syncget_f_resp is not None
             syncget_f: int | str = syncget_f_resp.split(" ")[-1]
@@ -618,6 +827,7 @@ class DI2008:
                 syncget_g = 1
 
             for di2008 in self.di2008s:
+                assert di2008.scw is not None
                 di2008.scw.send_command(f"syncstart {syncget_g}")
 
         else:
